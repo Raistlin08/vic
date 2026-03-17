@@ -2,6 +2,7 @@ import os
 import ctypes
 import json
 import vic.objects
+from vic.utils import is_ignored
 
 def cmd_init():
     try:
@@ -25,8 +26,19 @@ def cmd_init():
     
 
 def cmd_add(files):
-    print("add")
-    print(files)
+    for file in files:
+        if os.path.isfile(file):
+            if not is_ignored(file):
+                pass
+            else:
+                print(f"{file} is ignored")
+        elif os.path.isdir(file) or file == ".":
+            if not is_ignored(file):
+                pass
+            else:
+                print(f"{file} is ignored")
+        else:
+            print(f"{file} does not exist")
 
 def cmd_commit(message):
     print("commit")
