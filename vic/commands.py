@@ -128,7 +128,62 @@ def cmd_commit(message):
 
 
 def cmd_log():
-    print("log")
+    try:
+        with open(".vic/HEAD", "r") as f:
+            HEAD=f.read()
+        
+        key, head_path = HEAD.split(" ")
+        
+        try:
+            with open(f".vic/{head_path}") as f:
+                sha=f.read()
+        except FileNotFoundError:
+            sha = None
+        
+        if sha == "" or sha==None:
+                print("No commits were made yet")
+                return
+        
+        while sha !=None:
+            
+            print(f"commit {sha[:7]}",end="")
+            type, content = read_object(sha)
+            content = content.decode()
+            content = content.split("\n")
+            
+            sha = None
+            author = "unknown"
+            committer = "unknown"
+            date = "unknown"
+            message = False
+            
+            for row in content:
+                if message:
+                    message = row
+                    break
+                key = row.split(" ",1)
+                if key[0]=="parent":
+                    sha = key[1]
+                elif key[0]=="author":
+                    tmp = key[1].split(" ")
+                    author = tmp[0] + tmp[1]
+                elif key[0] == "committer":
+                    tmp = key[1].split(" ")
+                    committer = tmp[0] + tmp[1]
+                    date = time.ctime(int(tmp[2]))
+                if row=="":
+                    message = True
+            
+            print(f" made {date}")
+            print(f"author {author}")
+            print(f"committer {committer}")
+            print(f"     {message}")
+            print()
+        
+        
+    except FileNotFoundError:
+        print("Missing HEAD file in .vic")
+        return
 
 
 def cmd_status():
