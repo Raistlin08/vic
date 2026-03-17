@@ -3,6 +3,7 @@ import ctypes
 import json
 from vic.objects import hash_object, read_object
 from vic.utils import is_ignored
+import time
 
 # Creates the repo, makes the directories structure and sets the .vic directory to hidden
 def cmd_init():
@@ -74,8 +75,56 @@ def cmd_add(files):
 
 
 def cmd_commit(message):
-    print("commit")
-    print(message)
+    try:
+        with open(".vic/index", "r") as f:
+            indexRaw=f.read()
+        index = json.loads(indexRaw)
+        
+        if index == {}:
+            print("There is nothing to commit, use 'vic add filename' to add files to commit")
+            return
+        
+        tree_object = b""
+        for file in index:
+            tree_object += b"100644 " + file.encode() + b"\0" + bytes.fromhex(index[file])
+        
+        tree_sha = hash_object(tree_object, "tree")
+        
+        try:
+            with open(".vic/HEAD", "r") as f:
+                HEAD=f.read()
+        except FileNotFoundError:
+            print("Missing HEAD file in .vic")
+            return
+        
+        key, head_path = HEAD.split(" ")
+        
+        try:
+            with open(f".vic/{head_path}") as f:
+                parent_sha=f.read()
+        except FileNotFoundError:
+            parent_sha = None
+            
+        lines = []
+        lines.append(f"tree {tree_sha}")
+        if parent_sha:
+            lines.append(f"parent {parent_sha}")
+        lines.append(f"author Utente <utente@gmail.com> {int(time.time())}")
+        lines.append(f"committer Utente <utente@gmail.com> {int(time.time())}")
+        lines.append("")
+        lines.append(message)
+        commit = "\n".join(lines)
+        commit = commit.encode()
+        commit_sha = hash_object(commit,"commit")
+        
+        with open(f".vic/{head_path}", "w") as f:
+            f.write(commit_sha)
+        
+        print(f"Commit made at {time.ctime(int(time.time()))}: {message}")
+        
+            
+    except FileNotFoundError:
+        print("There is nothing to commit, use 'vic add filename' to add files to commit")
 
 
 def cmd_log():
