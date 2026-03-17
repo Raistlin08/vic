@@ -187,4 +187,29 @@ def cmd_log():
 
 
 def cmd_status():
-    print("status")
+    #index
+    try:
+        with open(".vic/index", "r") as f:
+            indexRaw=f.read()
+        index = json.loads(indexRaw)
+    except FileNotFoundError:
+        index = {}
+    
+    # tree
+    with open(".vic/HEAD", "r") as f:
+            HEAD=f.read()
+
+    key, head_path = HEAD.split(" ")
+    
+    try:
+        with open(f".vic/{head_path}") as f:
+            sha=f.read()
+    except FileNotFoundError:
+        sha = None
+    
+    if sha == "" or sha==None:
+            tree = {}
+    else:
+        pass
+    
+    
