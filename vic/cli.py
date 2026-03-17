@@ -1,5 +1,5 @@
 import argparse, sys
-from commands import cmd_init, cmd_add, cmd_commit, cmd_log, cmd_status
+from vic.commands import cmd_init, cmd_add, cmd_commit, cmd_log, cmd_status
 
 
 def main():
