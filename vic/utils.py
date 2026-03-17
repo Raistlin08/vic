@@ -2,6 +2,9 @@ from fnmatch import fnmatch
 
 # Checks if a given file or direcotory is to ignore using .vicingore
 def is_ignored(path):
+    for part in path.replace("\\", "/").split("/"):
+                    if fnmatch(part, ".vic"):
+                        return True
     try:
         with open(".vicignore", "r") as f:
             for line in f:
