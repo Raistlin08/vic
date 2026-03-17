@@ -1,6 +1,6 @@
 from fnmatch import fnmatch
 
-
+# Checks if a given file or direcotory is to ignore using .vicingore
 def is_ignored(path):
     try:
         with open(".vicignore", "r") as f:

@@ -1,9 +1,13 @@
 import argparse, sys
 from vic.commands import cmd_init, cmd_add, cmd_commit, cmd_log, cmd_status
 
-
+"""
+Main functions, handles iteraction through cli
+calls all the functions in commands.py
+"""
 def main():
-    parser=argparse.ArgumentParser(prog="vic",description='A simple version control system.')
+    
+    parser=argparse.ArgumentParser(prog="vic",description='A version controll system')
     sub= parser.add_subparsers(dest='command')
     
     sub.add_parser("init", help='Initialize a new repository')

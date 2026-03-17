@@ -2,6 +2,7 @@ from hashlib import sha1
 import zlib
 import os
 
+# Takes as input the file data and compresses them in a file and returns the hash
 def hash_object(data, obj_type):
     header  = f"{obj_type} {len(data)}\0".encode()
     full = header+data
@@ -14,7 +15,7 @@ def hash_object(data, obj_type):
         f.write(compressed_full)
     return sha
 
-
+# Takes an hash and decompress the relative file
 def read_object(sha):
     path = f".vic/objects/{sha[:2]}/"
     filename = f"{sha[2:]}"

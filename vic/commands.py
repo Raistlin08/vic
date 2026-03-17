@@ -4,6 +4,7 @@ import json
 import vic.objects
 from vic.utils import is_ignored
 
+# Creates the repo, makes the directories structure and sets the .vic directory to hidden
 def cmd_init():
     try:
         FILE_ATTRIBUTE_HIDDEN = 0x02
@@ -21,10 +22,11 @@ def cmd_init():
     except FileExistsError:
         print("Repo già presente")
 
-    
-    
-    
-
+"""
+Receives a list of files and directories,
+it navigates the directoies to find the files,
+for each file uses hash_object and updates the .vic/index
+"""
 def cmd_add(files):
     for file in files:
         if os.path.isfile(file):
@@ -40,12 +42,15 @@ def cmd_add(files):
         else:
             print(f"{file} does not exist")
 
+
 def cmd_commit(message):
     print("commit")
     print(message)
 
+
 def cmd_log():
     print("log")
+
 
 def cmd_status():
     print("status")
