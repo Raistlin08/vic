@@ -2,8 +2,13 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored
+from vic.utils import is_ignored, hash
 import time
+
+GREEN = "\033[32m"
+RED = "\033[31m"
+YELLOW = "\033[33m"
+RESET = "\033[0m"
 
 # Creates the repo, makes the directories structure and sets the .vic directory to hidden
 def cmd_init():
@@ -196,20 +201,55 @@ def cmd_status():
         index = {}
     
     # tree
-    with open(".vic/HEAD", "r") as f:
-            HEAD=f.read()
+    try:
+        with open(".vic/HEAD", "r") as f:
+                HEAD=f.read()
+    except FileNotFoundError:
+        print("No previous commits")
+        return
 
     key, head_path = HEAD.split(" ")
     
     try:
         with open(f".vic/{head_path}") as f:
-            sha=f.read()
+            commit_sha=f.read()
     except FileNotFoundError:
-        sha = None
+        commit_sha = None
+    tree_dict = {}
+    if not (commit_sha == "" or commit_sha==None):
+        type, commit = read_object(commit_sha)
+        tree_to_parse = commit.decode()
+        tree_to_parse = tree_to_parse.split("\n",1)[0]
+        tree_sha = tree_to_parse.split(" ")[1]
+
+        type, tree = read_object(tree_sha)
+        i = 0
+        while i < len(tree):
+            null = tree.index(b"\0", i)
+            header = tree[i:null].decode()
+            mode, filename = header.split(" ", 1)
+            sha_bytes = tree[null+1:null+21]
+            tree_dict[filename] = sha_bytes.hex()
+            i = null + 21
+        
+    dir_files = {}
+    for root, dirs, items in os.walk("."):
+            dirs[:] = [d for d in dirs if not is_ignored(d)] # Check if it is in .vicignore
+            for item in items:
+                path = os.path.join(root,item)
+                if not is_ignored(path): # Check if it is in .vicignore
+                    with open(path,"rb") as f:
+                        data = f.read()
+                    dir_files[path]=hash(data,"blob")
     
-    if sha == "" or sha==None:
-            tree = {}
-    else:
-        pass
+    for filepath, sha in index.items():
+        if filepath not in tree_dict:
+            print(f"{GREEN}staged:    {filepath}{RESET}")
+        elif tree_dict[filepath] != sha:
+            print(f"{GREEN}staged:    {filepath}{RESET}")
     
-    
+    for filepath, sha in dir_files.items():
+        if filepath not in index:
+            print(f"{YELLOW}untracked: {filepath}{RESET}")
+        elif sha != index[filepath]:
+            print(f"{RED}modified:  {filepath}{RESET}")

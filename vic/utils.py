@@ -1,4 +1,6 @@
 from fnmatch import fnmatch
+from hashlib import sha1
+
 
 # Checks if a given file or direcotory is to ignore using .vicingore
 def is_ignored(path):
@@ -19,3 +21,9 @@ def is_ignored(path):
         return False
 
     return False
+
+def hash(data, obj_type):
+    header  = f"{obj_type} {len(data)}\0".encode()
+    full = header+data
+    sha = sha1(full).hexdigest()
+    return sha
