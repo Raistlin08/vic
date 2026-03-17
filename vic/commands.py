@@ -1,5 +1,7 @@
 import os
 import ctypes
+import json
+import vic.objects
 
 def cmd_init():
     try:
