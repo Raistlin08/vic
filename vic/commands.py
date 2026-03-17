@@ -1,20 +1,25 @@
 import os
+import ctypes
 
 def cmd_init():
-    path = os.getcwd()
     try:
-        os.makedirs(".vic", exist_ok=False)
+        FILE_ATTRIBUTE_HIDDEN = 0x02
+        path = os.getcwd()
+        folder=".vic"
+        os.makedirs(folder, exist_ok=False)
         os.makedirs(".vic/objects",exist_ok=True)
         os.makedirs(".vic/refs",exist_ok=True)
         os.makedirs(".vic/refs/heads",exist_ok=True)
         os.makedirs(".vic/refs/tags",exist_ok=True)
-        with open(".vic/HEAD", "a") as f:
+        with open(".vic/HEAD", "w") as f:
             f.write("ref: refs/heads/main")
+        ctypes.windll.kernel32.SetFileAttributesW(folder, FILE_ATTRIBUTE_HIDDEN)
+        print("Empty repository inizialized in " + path)
     except FileExistsError:
-        print("La cartella esisteva già!")
+        print("Repo già presente")
 
     
-    print("Empty repository inizialized in " + path)
+    
     
 
 def cmd_add(files):
