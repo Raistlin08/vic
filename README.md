@@ -1,0 +1,2 @@
+## VIC ##
+# Git from scratch #
