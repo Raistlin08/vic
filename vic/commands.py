@@ -2,7 +2,7 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored, get_hash
+from vic.utils import is_ignored, get_hash, get_tree
 import time
 from difflib import unified_diff
 
@@ -319,22 +319,7 @@ def cmd_status():
             commit_sha=f.read()
     except FileNotFoundError:
         commit_sha = None
-    tree_dict = {}
-    if not (commit_sha == "" or commit_sha==None):
-        type, commit = read_object(commit_sha)
-        tree_to_parse = commit.decode()
-        tree_to_parse = tree_to_parse.split("\n",1)[0]
-        tree_sha = tree_to_parse.split(" ")[1]
-
-        type, tree = read_object(tree_sha)
-        i = 0
-        while i < len(tree):
-            null = tree.index(b"\0", i)
-            header = tree[i:null].decode()
-            mode, filename = header.split(" ", 1)
-            sha_bytes = tree[null+1:null+21]
-            tree_dict[filename] = sha_bytes.hex()
-            i = null + 21
+    tree_dict = tree_dict = get_tree(commit_sha)
     
     # Creating directory dict
     dir_files = {}
@@ -425,7 +410,13 @@ def cmd_branch(name, delete):
 
 def cmd_checkout(name):
     path = f".vic/refs/heads/{name}"
-    if not os.path.exists(path):    
+    
+    try:
+        with open(path, "r") as f:
+            commit_sha = f.read()
+    except FileNotFoundError:
         print("Branch doesn't exist")
-
-            
+        return
+    
+    # Tree object
+    tree_dict = get_tree(commit_sha)
