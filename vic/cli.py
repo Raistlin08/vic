@@ -1,5 +1,5 @@
 import argparse, sys
-from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status
+from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status, cmd_branch, cmd_checkout
 
 """
 Main functions, handles iteraction through cli
@@ -28,6 +28,13 @@ def main():
     sub.add_parser("log") # Log command
     sub.add_parser("status") # Status command
     
+    p_branch = sub.add_parser("branch") # Branch command
+    p_branch.add_argument("branch",nargs="?")
+    p_branch.add_argument("-d", "--delete", metavar="BRANCH", default=None)
+    
+    p_checkout = sub.add_parser("checkout") # Checkout command
+    p_checkout.add_argument("branch", nargs=1)
+    
     args = parser.parse_args()
     
     match args.command:
@@ -38,6 +45,8 @@ def main():
         case "commit": cmd_commit(args.message)
         case "log": cmd_log()
         case "status": cmd_status()
+        case "branch": cmd_branch(args.branch, args.delete)
+        case "checkout": cmd_checkout(args.branch)
         case _:
             parser.print_help()
             sys.exit(1)

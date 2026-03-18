@@ -359,3 +359,73 @@ def cmd_status():
             print(f"{YELLOW}untracked: {filepath}{RESET}")
         elif sha != index[filepath]:
             print(f"{RED}modified:  {filepath}{RESET}")
+
+
+
+"""
+Takes name and delete as parameters
+Then there are three cases:
+1. name and delete are None, lists all branches present in .vic/refs/heads and puts a * in the current one
+2. name is set, creates a new branch in .vic/refs/heads with the inserted name, puts the SHA of the last commit
+3. delete is set, deletes a branch by deleting the relative file in .vic/refs/heads, you can't delete the current branch
+"""
+def cmd_branch(name, delete):
+    if name==None and delete==None:
+        try:
+            with open(".vic/HEAD", "r") as f:
+                HEAD=f.read()
+        except FileNotFoundError:
+            print("Missing HEAD file")
+            return
+        current = HEAD.strip().split("/")[-1]
+        for root, dirs, items in os.walk(".vic/refs/heads/"):
+            for item in items:
+                print(f"{item}",end="")
+                if item== current:
+                    print(" *")
+    elif name and delete:
+        print("Error: cannot use both a name and --delete at the same time")
+        return
+    elif name:
+        try:
+            with open(".vic/HEAD", "r") as f:
+                HEAD=f.read()
+        except FileNotFoundError:
+            print("Missing HEAD file")
+            return
+        
+        # Commit sha
+        key, head_path = HEAD.split(" ")
+
+        try:
+            with open(f".vic/{head_path}") as f:
+                commit_sha=f.read()
+        except FileNotFoundError:
+            print("No previous commits")
+            
+        with open(f".vic/refs/heads/{name}", "w") as f:
+            f.write(f"{commit_sha}")
+    else:
+        try:
+            with open(".vic/HEAD", "r") as f:
+                HEAD=f.read()
+        except FileNotFoundError:
+            print("Missing HEAD file")
+            return
+        current = HEAD.strip().split("/")[-1]
+        if current == delete:
+            print("Cannot delete current branch, use vic checkout <branch> to switch betweeb branches")
+            return
+        path = f".vic/refs/heads/{delete}"
+        if os.path.exists(path):
+            os.remove(path)
+            print("Branch deleted")
+        else:
+            print("Branch doesn't exist")
+
+def cmd_checkout(name):
+    path = f".vic/refs/heads/{name}"
+    if not os.path.exists(path):    
+        print("Branch doesn't exist")
+
+            
