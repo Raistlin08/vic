@@ -33,7 +33,7 @@ def main():
     p_branch.add_argument("-d", "--delete", metavar="BRANCH", default=None)
     
     p_checkout = sub.add_parser("checkout") # Checkout command
-    p_checkout.add_argument("branch", nargs=1)
+    p_checkout.add_argument("branch")
     
     args = parser.parse_args()
     

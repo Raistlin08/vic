@@ -367,7 +367,8 @@ def cmd_branch(name, delete):
             for item in items:
                 print(f"{item}",end="")
                 if item== current:
-                    print(" *")
+                    print(" *",end="")
+                print("")
     elif name and delete:
         print("Error: cannot use both a name and --delete at the same time")
         return
@@ -387,9 +388,16 @@ def cmd_branch(name, delete):
                 commit_sha=f.read()
         except FileNotFoundError:
             print("No previous commits")
-            
-        with open(f".vic/refs/heads/{name}", "w") as f:
+        
+        path = f".vic/refs/heads/{name}"
+        if os.path.exists(f".vic/refs/heads/{name}"):
+            print(f"Branch {name} already exist, use a different name or use vic branch -d {name} to delete it")
+            return
+        
+        with open(path, "w") as f:
             f.write(f"{commit_sha}")
+            
+        print(f"{name} has been created, navigate to it using vic checkout {name}")
     else:
         try:
             with open(".vic/HEAD", "r") as f:
@@ -399,7 +407,7 @@ def cmd_branch(name, delete):
             return
         current = HEAD.strip().split("/")[-1]
         if current == delete:
-            print("Cannot delete current branch, use vic checkout <branch> to switch betweeb branches")
+            print("Cannot delete current branch, use vic checkout <branch> to switch between branches")
             return
         path = f".vic/refs/heads/{delete}"
         if os.path.exists(path):
@@ -418,5 +426,63 @@ def cmd_checkout(name):
         print("Branch doesn't exist")
         return
     
+    # Current tree
+    try:
+        with open(".vic/HEAD", "r") as f:
+            HEAD=f.read()
+    except FileNotFoundError:
+        print("Missing HEAD file")
+        return
+    
+    key, head_path = HEAD.split(" ")
+    try:
+        with open(f".vic/{head_path}") as f:
+            current_commit_sha=f.read()
+    except FileNotFoundError:
+        print("No previous commits")
+    
+    current_branch = head_path.strip().split("/")[-1]
+    if current_branch == name:
+        print(f"You are already in the {name} branch")
+        return
+    
+    current_tree_dict = get_tree(current_commit_sha)
+    
     # Tree object
     tree_dict = get_tree(commit_sha)
+    
+    # Deliting current branch files
+    for file in current_tree_dict:
+        path = os.path.normpath(file)
+        try:
+            os.remove(path)
+        except FileNotFoundError:
+            continue
+        dirs = path.split("/")
+        dirs = dirs[:-1]
+        
+        for i in range(len(dirs), 0, -1):
+            dir_path = "/".join(dirs[:i])
+            try:
+                os.rmdir(dir_path)
+            except OSError:
+                pass
+    
+    for file in tree_dict:
+        path = os.path.normpath(file)
+        parent = os.path.dirname(path)
+        if parent:
+            os.makedirs(parent,exist_ok=True)
+        key, data = read_object(tree_dict[file])
+        with open(path,"wb") as f:
+            f.write(data)
+    
+
+    with open(".vic/index", "w") as f:
+        json.dump(tree_dict, f)
+        
+    with open(".vic/HEAD", "w") as f:
+        f.write(f"ref: refs/heads/{name}")
+
+    print(f"Switched to branch '{name}'")
+        

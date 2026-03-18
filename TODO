@@ -1,7 +1,5 @@
-vic diff
 
-vic branch
-vic checkout
+vic checkout fix deleting directories when switching they dont delete
 
 vic merge
 
