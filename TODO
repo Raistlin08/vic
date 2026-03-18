@@ -3,4 +3,6 @@ vic checkout fix deleting directories when switching they dont delete
 
 vic merge
 
+vic gc
+
 vic config to set author and other QoL stuff

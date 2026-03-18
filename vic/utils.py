@@ -53,4 +53,45 @@ def get_tree(commit_sha):
 
 # Finds the common ancestor between two commits
 def get_merge_base(sha1, sha2):
-    pass
+    # Finding sha1 set
+    sha = sha1
+    sha1_set = set()
+    sha1_set.add(sha1)
+    # Loop until it finds root commit
+    while sha !=None:
+        type, content = read_object(sha)
+        content = content.decode()
+        content = content.split("\n")
+        
+        sha = None
+        # Parsing of the commit
+        for row in content:
+            key = row.split(" ",1)
+            if key[0]=="parent":
+                sha = key[1]
+                sha1_set.add(sha)
+            if row=="":
+                continue
+    
+    if sha2 in sha1_set:
+        return sha2
+    
+    sha = sha2
+    # Loop until it finds common ancestor
+    while sha !=None:
+        type, content = read_object(sha)
+        content = content.decode()
+        content = content.split("\n")
+        
+        # Parsing of the commit
+        for row in content:
+            key = row.split(" ",1)
+            if key[0]=="parent":
+                sha = key[1]
+                if sha in sha1_set:
+                    return sha
+                
+            if row=="":
+                continue
+                
+    return None # If no common ancestor were found
