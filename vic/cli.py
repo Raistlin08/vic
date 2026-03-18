@@ -10,23 +10,23 @@ def main():
     parser=argparse.ArgumentParser(prog="vic",description='A version controll system')
     sub= parser.add_subparsers(dest='command')
     
-    sub.add_parser("init", help='Initialize a new repository')
+    sub.add_parser("init", help='Initialize a new repository') # Init command
     
-    p_add=sub.add_parser("add")
+    p_add=sub.add_parser("add") # Add command
     p_add.add_argument("files",nargs="+")
     
-    p_rm=sub.add_parser("rm")
+    p_rm=sub.add_parser("rm") # Remove command
     p_rm.add_argument("--cached", action="store_true", default=False)
     p_rm.add_argument("files",nargs="+")
     
-    p_diff = sub.add_parser("diff")
+    p_diff = sub.add_parser("diff") # Diff command
     p_diff.add_argument("files", nargs="*")
     
-    p_commit=sub.add_parser("commit")
+    p_commit=sub.add_parser("commit") # Commit command
     p_commit.add_argument("-m","--message", required=True)
     
-    sub.add_parser("log")
-    sub.add_parser("status")
+    sub.add_parser("log") # Log command
+    sub.add_parser("status") # Status command
     
     args = parser.parse_args()
     

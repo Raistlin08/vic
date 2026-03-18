@@ -77,7 +77,10 @@ def cmd_add(files):
     with open(".vic/index", "w") as f:
         json.dump(index, f)
 
-
+"""
+Receives a list of files and removes them from the index file and the file system
+if the cached flag is on it just removes them from the index file
+"""
 def cmd_rm(files, cached=False):
     try:
         with open(".vic/index", "r") as f:
@@ -86,6 +89,7 @@ def cmd_rm(files, cached=False):
         print("No index found")
         return
     
+    # Loop over every file
     for file in files:
         path=os.path.normpath(file)
         if path not in index:
@@ -93,7 +97,7 @@ def cmd_rm(files, cached=False):
             continue
         else:
             index.pop(path)
-            if not cached:
+            if not cached: # Checks cached flag and deletes he file from the directory
                 try:
                     os.remove(path)
                 except FileNotFoundError:
@@ -104,7 +108,14 @@ def cmd_rm(files, cached=False):
         json.dump(index, f)
 
 
-
+"""
+Takes as input the commit message,
+Opens the index file and creates the tree_object, saving the hash
+Then opens the HEAD file to find the hash of the previos commit
+and creates the commit object, that stores the tree_object sha, 
+the parent_commit sha and the message
+plus some other QoL data
+"""
 def cmd_commit(message):
     try:
         with open(".vic/index", "r") as f:
@@ -115,12 +126,14 @@ def cmd_commit(message):
             print("There is nothing to commit, use 'vic add filename' to add files to commit")
             return
         
+        # Creatin tree object
         tree_object = b""
         for file in index:
             tree_object += b"100644 " + file.encode() + b"\0" + bytes.fromhex(index[file])
         
         tree_sha = hash_object(tree_object, "tree")
         
+        # Finding parent sha
         try:
             with open(".vic/HEAD", "r") as f:
                 HEAD=f.read()
@@ -135,7 +148,8 @@ def cmd_commit(message):
                 parent_sha=f.read()
         except FileNotFoundError:
             parent_sha = None
-            
+        
+        # Creating commit object
         lines = []
         lines.append(f"tree {tree_sha}")
         if parent_sha:
@@ -157,9 +171,13 @@ def cmd_commit(message):
     except FileNotFoundError:
         print("There is nothing to commit, use 'vic add filename' to add files to commit")
 
-
+"""
+Walks down the commit chain, and lists the commits with their message
+"""
 def cmd_log():
     try:
+        
+        # Finds head commit
         with open(".vic/HEAD", "r") as f:
             HEAD=f.read()
         
@@ -175,6 +193,7 @@ def cmd_log():
                 print("No commits were made yet")
                 return
         
+        # Loop until it finds root commit
         while sha !=None:
             
             print(f"commit {sha[:7]}",end="")
@@ -188,6 +207,7 @@ def cmd_log():
             date = "unknown"
             message = False
             
+            # Parsing of the commit
             for row in content:
                 if message:
                     message = row
@@ -216,9 +236,15 @@ def cmd_log():
         print("Missing HEAD file in .vic")
         return
 
-
+"""
+Confronts the sha of the files in the index file
+with the ones in the last commit and the ones of the files in the directory
+STAGED-the file is present in index but the hash is different from the one in the tree, or in the tree there isn't
+UNTRACKED-the file isn't present in the index but is present in the directory
+MODIFIED-the file is present in the directory but its hash is different from the one in index
+"""
 def cmd_status():
-    #index
+    # Creating index dict
     try:
         with open(".vic/index", "r") as f:
             indexRaw=f.read()
@@ -226,7 +252,7 @@ def cmd_status():
     except FileNotFoundError:
         index = {}
     
-    # tree
+    # Creating tree dict
     try:
         with open(".vic/HEAD", "r") as f:
                 HEAD=f.read()
@@ -258,7 +284,7 @@ def cmd_status():
             tree_dict[filename] = sha_bytes.hex()
             i = null + 21
     
-    #dir
+    # Creating directory dict
     dir_files = {}
     for root, dirs, items in os.walk("."):
             dirs[:] = [d for d in dirs if not is_ignored(d)] # Check if it is in .vicignore
@@ -269,6 +295,7 @@ def cmd_status():
                         data = f.read()
                     dir_files[path]=get_hash(data,"blob")
     
+    # Confronting the dicts
     for filepath, sha in index.items():
         if filepath not in tree_dict:
             print(f"{GREEN}staged:    {filepath}{RESET}")
