@@ -1,5 +1,5 @@
 import argparse, sys
-from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_commit, cmd_log, cmd_status
+from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status
 
 """
 Main functions, handles iteraction through cli
@@ -20,7 +20,7 @@ def main():
     p_rm.add_argument("files",nargs="+")
     
     p_diff = sub.add_parser("diff") # Diff command
-    p_diff.add_argument("files", nargs="*")
+    p_diff.add_argument("files", nargs="*") 
     
     p_commit=sub.add_parser("commit") # Commit command
     p_commit.add_argument("-m","--message", required=True)
@@ -34,6 +34,7 @@ def main():
         case "init": cmd_init()
         case "add": cmd_add(args.files)
         case "rm": cmd_rm(args.files, args.cached)
+        case "diff": cmd_diff(args.files)
         case "commit": cmd_commit(args.message)
         case "log": cmd_log()
         case "status": cmd_status()

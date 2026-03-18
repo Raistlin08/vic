@@ -4,6 +4,7 @@ import json
 from vic.objects import hash_object, read_object
 from vic.utils import is_ignored, get_hash
 import time
+from difflib import unified_diff
 
 GREEN = "\033[32m"
 RED = "\033[31m"
@@ -107,6 +108,57 @@ def cmd_rm(files, cached=False):
     with open(".vic/index", "w") as f:
         json.dump(index, f)
 
+"""
+Takes as input a list of files and it tells the differences 
+between the file saved in index and the file saved in the directory
+"""
+def cmd_diff(files):
+    try:
+        with open(".vic/index", "r") as f:
+            index = json.loads(f.read())
+    except FileNotFoundError:
+        print("No index found")
+        return
+    if not files:
+        files=list(index.keys())
+
+    # Loops over every file to confront
+    for file in files:
+        path = os.path.normpath(file)
+        if path not in index:
+            print(f"Item {path} isn't in the index file, add it with: vic add {path}")
+            continue
+        
+        # Index file
+        key, index_data = read_object(index[path])
+        index_data = index_data.decode()
+        index_data = index_data.splitlines()
+        
+        # Directory file
+        try:
+            with open(f"{os.path.join(path)}", "rb") as f:
+                dir_data=f.read()
+        except FileNotFoundError:
+            print(f"Item {path} isn't in the directory")
+            continue
+        dir_data = dir_data.decode()
+        dir_data=dir_data.splitlines()
+        
+        # Generate diff
+        diff = unified_diff(index_data,dir_data,"index file","dir file",lineterm="")
+        
+        # Print diff
+        print(f"Diff for file {path}")
+        for row in diff:
+            if row[0]=="+":
+                print(f"{GREEN}{row}{RESET}")
+            elif row[0]=="-":
+                print(f"{RED}{row}{RESET}")
+            elif row[0]=="@":
+                print(f"{YELLOW}{row}{RESET}")
+            else:
+                print(row)
+        print("")
 
 """
 Takes as input the commit message,
