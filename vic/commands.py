@@ -458,11 +458,11 @@ def cmd_checkout(name):
             os.remove(path)
         except FileNotFoundError:
             continue
-        dirs = path.split("/")
+        dirs = path.replace("\\", "/").split("/")
         dirs = dirs[:-1]
         
         for i in range(len(dirs), 0, -1):
-            dir_path = "/".join(dirs[:i])
+            dir_path = os.path.normpath("/".join(dirs[:i]))
             try:
                 os.rmdir(dir_path)
             except OSError:

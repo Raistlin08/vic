@@ -50,3 +50,7 @@ def get_tree(commit_sha):
             tree_dict[filename] = sha_bytes.hex()
             i = null + 21
     return tree_dict
+
+# Finds the common ancestor between two commits
+def get_merge_base(sha1, sha2):
+    pass
