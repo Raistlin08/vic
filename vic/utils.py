@@ -22,7 +22,7 @@ def is_ignored(path):
 
     return False
 
-def hash(data, obj_type):
+def get_hash(data, obj_type):
     header  = f"{obj_type} {len(data)}\0".encode()
     full = header+data
     sha = sha1(full).hexdigest()

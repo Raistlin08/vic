@@ -2,7 +2,7 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored, hash
+from vic.utils import is_ignored, get_hash
 import time
 
 GREEN = "\033[32m"
@@ -58,7 +58,7 @@ def cmd_add(files):
                 for root, dirs, items in os.walk(file):
                     dirs[:] = [d for d in dirs if not is_ignored(d)] # Check if it is in .vicignore
                     for item in items:
-                        path = os.path.join(root,item)
+                        path = os.path.normpath(os.path.join(root, item))
                         if not is_ignored(path): # Check if it is in .vicignore
                             with open(path, "rb") as f:
                                 content=f.read()
@@ -231,16 +231,17 @@ def cmd_status():
             sha_bytes = tree[null+1:null+21]
             tree_dict[filename] = sha_bytes.hex()
             i = null + 21
-        
+    
+    #dir
     dir_files = {}
     for root, dirs, items in os.walk("."):
             dirs[:] = [d for d in dirs if not is_ignored(d)] # Check if it is in .vicignore
             for item in items:
-                path = os.path.join(root,item)
+                path = os.path.normpath(os.path.join(root, item))
                 if not is_ignored(path): # Check if it is in .vicignore
                     with open(path,"rb") as f:
                         data = f.read()
-                    dir_files[path]=hash(data,"blob")
+                    dir_files[path]=get_hash(data,"blob")
     
     for filepath, sha in index.items():
         if filepath not in tree_dict:
