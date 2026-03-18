@@ -22,6 +22,7 @@ def is_ignored(path):
 
     return False
 
+# Generate the hash of a given file
 def get_hash(data, obj_type):
     header  = f"{obj_type} {len(data)}\0".encode()
     full = header+data

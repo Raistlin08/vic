@@ -19,6 +19,8 @@ def main():
     p_rm.add_argument("--cached", action="store_true", default=False)
     p_rm.add_argument("files",nargs="+")
     
+    p_diff = sub.add_parser("diff")
+    p_diff.add_argument("files", nargs="*")
     
     p_commit=sub.add_parser("commit")
     p_commit.add_argument("-m","--message", required=True)
