@@ -1,5 +1,5 @@
 import argparse, sys
-from vic.commands import cmd_init, cmd_add, cmd_commit, cmd_log, cmd_status
+from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_commit, cmd_log, cmd_status
 
 """
 Main functions, handles iteraction through cli
@@ -15,6 +15,11 @@ def main():
     p_add=sub.add_parser("add")
     p_add.add_argument("files",nargs="+")
     
+    p_rm=sub.add_parser("rm")
+    p_rm.add_argument("--cached", action="store_true", default=False)
+    p_rm.add_argument("files",nargs="+")
+    
+    
     p_commit=sub.add_parser("commit")
     p_commit.add_argument("-m","--message", required=True)
     
@@ -26,6 +31,7 @@ def main():
     match args.command:
         case "init": cmd_init()
         case "add": cmd_add(args.files)
+        case "rm": cmd_rm(args.files, args.cached)
         case "commit": cmd_commit(args.message)
         case "log": cmd_log()
         case "status": cmd_status()

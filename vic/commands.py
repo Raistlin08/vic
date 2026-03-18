@@ -78,6 +78,32 @@ def cmd_add(files):
         json.dump(index, f)
 
 
+def cmd_rm(files, cached=False):
+    try:
+        with open(".vic/index", "r") as f:
+            index = json.loads(f.read())
+    except FileNotFoundError:
+        print("No index found")
+        return
+    
+    for file in files:
+        path=os.path.normpath(file)
+        if path not in index:
+            print(f"Item {path} does not exist")
+            continue
+        else:
+            index.pop(path)
+            if not cached:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    print(f"{path} already deleted from disk")
+
+            print(f"Item {path} has been deleted")
+    with open(".vic/index", "w") as f:
+        json.dump(index, f)
+
+
 
 def cmd_commit(message):
     try:
