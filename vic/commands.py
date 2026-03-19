@@ -2,7 +2,7 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored, get_hash, get_tree
+from vic.utils import is_ignored, get_hash, get_tree, get_merge_base
 import time
 from difflib import unified_diff
 
@@ -485,4 +485,30 @@ def cmd_checkout(name):
         f.write(f"ref: refs/heads/{name}")
 
     print(f"Switched to branch '{name}'")
+
+
+def cmd_merge(other_branch):
+     # Commit
+    try:
+        with open(".vic/HEAD", "r") as f:
+            HEAD=f.read()
+    except FileNotFoundError:
+        print("Missing HEAD file")
+        return
+    
+    key, head_path = HEAD.split(" ")
+    try:
+        with open(f".vic/{head_path}") as f:
+            current_sha=f.read()
+    except FileNotFoundError:
+        print("No previous commits")
         
+     
+    key, head_path = f".vic/refs/heads/{other_branch}"
+    try:
+        with open(f".vic/{head_path}") as f:
+            other_sha=f.read()
+    except FileNotFoundError:
+        print("No previous commits")
+        
+    base_sha = get_merge_base(current_sha,other_sha)

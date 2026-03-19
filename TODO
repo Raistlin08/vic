@@ -1,7 +1,5 @@
 
-vic checkout fix deleting directories when switching they dont delete
-
-vic merge
+ùvic merge
 
 vic gc
 
