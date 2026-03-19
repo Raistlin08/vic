@@ -488,7 +488,7 @@ def cmd_checkout(name):
 
 
 def cmd_merge(other_branch):
-     # Commit
+    # Commit
     try:
         with open(".vic/HEAD", "r") as f:
             HEAD=f.read()
@@ -497,18 +497,71 @@ def cmd_merge(other_branch):
         return
     
     key, head_path = HEAD.split(" ")
+    current_branch = head_path.strip().split("/")[-1]
     try:
         with open(f".vic/{head_path}") as f:
-            current_sha=f.read()
+            current_commit_sha=f.read()
     except FileNotFoundError:
         print("No previous commits")
+        return
+        
         
      
-    key, head_path = f".vic/refs/heads/{other_branch}"
+    other_head_path = f".vic/refs/heads/{other_branch}"
     try:
-        with open(f".vic/{head_path}") as f:
+        with open(other_head_path) as f:
             other_sha=f.read()
     except FileNotFoundError:
         print("No previous commits")
+        return
         
-    base_sha = get_merge_base(current_sha,other_sha)
+    base_sha = get_merge_base(current_commit_sha,other_sha)
+
+    # tree_dicts
+    current_tree_dict = get_tree(current_commit_sha)
+    other_tree_dict = get_tree(other_sha)
+    base_tree_dict = get_tree(base_sha)
+    
+    
+    if base_sha == current_commit_sha:
+        commit_sha = other_sha
+        
+        # Deliting current branch files
+        for file in current_tree_dict:
+            path = os.path.normpath(file)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                continue
+            dirs = path.replace("\\", "/").split("/")
+            dirs = dirs[:-1]
+            
+            for i in range(len(dirs), 0, -1):
+                dir_path = os.path.normpath("/".join(dirs[:i]))
+                try:
+                    os.rmdir(dir_path)
+                except OSError:
+                    pass
+        
+        for file in other_tree_dict:
+            path = os.path.normpath(file)
+            parent = os.path.dirname(path)
+            if parent:
+                os.makedirs(parent,exist_ok=True)
+            key, data = read_object(other_tree_dict[file])
+            with open(path,"wb") as f:
+                f.write(data)
+        
+
+        with open(".vic/index", "w") as f:
+            json.dump(other_tree_dict, f)
+            
+        with open(f".vic/{head_path}", "w") as f:
+            f.write(other_sha)
+        
+        print("Fast-Foward")
+    else:
+        files = current_tree_dict.keys() | other_tree_dict.keys() | base_tree_dict.keys()
+        
+        for file in files:
+            pass
