@@ -1,6 +1,19 @@
+I prossimi step possibili sono:
+Qualità del codice
 
-ùvic merge
+Salvare nome e email in .vic/config invece di averli hardcodati
+vic config per impostarli
+Messaggi di errore più consistenti ovunque
 
-vic gc
+Comandi utili
 
-vic config to set author and other QoL stuff
+vic gc — garbage collector per eliminare dangling objects
+vic stash — salva temporaneamente le modifiche senza committare
+vic restore — ripristina un file alla versione nell'indice
+
+Funzionalità avanzate
+
+vic tag — crea tag su commit specifici
+vic rebase — riscrive la storia dei commit
+vic remote / vic push / vic pull — interazione con repository remoti
+
