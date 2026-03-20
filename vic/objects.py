@@ -17,6 +17,8 @@ def hash_object(data, obj_type):
 
 # Takes an hash and decompress the relative file
 def read_object(sha):
+    if sha == None:
+        return "Deleted"
     path = f".vic/objects/{sha[:2]}/"
     filename = f"{sha[2:]}"
     try:

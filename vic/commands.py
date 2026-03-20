@@ -192,6 +192,14 @@ def cmd_commit(message):
         except FileNotFoundError:
             print("Missing HEAD file in .vic")
             return
+
+        # Checking for merge_commit
+        merge_commit = None
+        try:
+            with open(".vic/MERGE_HEAD", "r") as f:
+                merge_commit=f.read()
+        except FileNotFoundError:
+            pass
         
         key, head_path = HEAD.split(" ")
         
@@ -206,6 +214,9 @@ def cmd_commit(message):
         lines.append(f"tree {tree_sha}")
         if parent_sha:
             lines.append(f"parent {parent_sha}")
+        if merge_commit:
+            os.remove(".vic/MERGE_HEAD")
+            lines.append(f"parent {merge_commit }")
         lines.append(f"author Utente <utente@gmail.com> {int(time.time())}")
         lines.append(f"committer Utente <utente@gmail.com> {int(time.time())}")
         lines.append("")
@@ -244,14 +255,18 @@ def cmd_log():
         if sha == "" or sha==None:
                 print("No commits were made yet")
                 return
+        base_sha = sha
         
         # Loop until it finds root commit
         while sha !=None:
+            base_sha = sha
             
-            print(f"commit {sha[:7]}",end="")
             type, content = read_object(sha)
             content = content.decode()
             content = content.split("\n")
+            
+            parent_found = False
+            merge_commit = False
             
             sha = None
             author = "unknown"
@@ -266,7 +281,11 @@ def cmd_log():
                     break
                 key = row.split(" ",1)
                 if key[0]=="parent":
-                    sha = key[1]
+                    if parent_found:
+                        merge_commit = True
+                    else:
+                        parent_found = True
+                        sha = key[1]
                 elif key[0]=="author":
                     tmp = key[1].split(" ")
                     author = tmp[0] + tmp[1]
@@ -276,6 +295,11 @@ def cmd_log():
                     date = time.ctime(int(tmp[2]))
                 if row=="":
                     message = True
+                    
+            if merge_commit:
+                print(f"merge commit {base_sha[:7]}",end="")
+            else:
+                print(f"commit {base_sha[:7]}",end="")
             
             print(f" made {date}")
             print(f"author {author}")
@@ -487,6 +511,12 @@ def cmd_checkout(name):
     print(f"Switched to branch '{name}'")
 
 
+
+"""
+Takes the name of another branch as an input
+merges the other branch with the current one by checking which files have been modified in each branch
+makes the users resolve conflicts
+"""
 def cmd_merge(other_branch):
     # Commit
     try:
@@ -506,25 +536,25 @@ def cmd_merge(other_branch):
         return
         
         
-     
+    
     other_head_path = f".vic/refs/heads/{other_branch}"
     try:
         with open(other_head_path) as f:
-            other_sha=f.read()
+            other_commit_sha=f.read()
     except FileNotFoundError:
         print("No previous commits")
         return
         
-    base_sha = get_merge_base(current_commit_sha,other_sha)
+    base_sha = get_merge_base(current_commit_sha,other_commit_sha)
 
     # tree_dicts
     current_tree_dict = get_tree(current_commit_sha)
-    other_tree_dict = get_tree(other_sha)
+    other_tree_dict = get_tree(other_commit_sha)
     base_tree_dict = get_tree(base_sha)
     
-    
+    # Fast foward case, the current branch hasn't been modified since the other branch was created
     if base_sha == current_commit_sha:
-        commit_sha = other_sha
+        commit_sha = other_commit_sha
         
         # Deliting current branch files
         for file in current_tree_dict:
@@ -542,7 +572,7 @@ def cmd_merge(other_branch):
                     os.rmdir(dir_path)
                 except OSError:
                     pass
-        
+        # Writing other files
         for file in other_tree_dict:
             path = os.path.normpath(file)
             parent = os.path.dirname(path)
@@ -557,11 +587,111 @@ def cmd_merge(other_branch):
             json.dump(other_tree_dict, f)
             
         with open(f".vic/{head_path}", "w") as f:
-            f.write(other_sha)
+            f.write(other_commit_sha)
         
         print("Fast-Foward")
     else:
-        files = current_tree_dict.keys() | other_tree_dict.keys() | base_tree_dict.keys()
+        unique_keys = current_tree_dict.keys() | other_tree_dict.keys() | base_tree_dict.keys()
         
-        for file in files:
-            pass
+        new_index = {}
+        conflicts = []
+        
+        for file in unique_keys:
+            current_sha = current_tree_dict.get(file)
+            other_sha = other_tree_dict.get(file)
+            base_sha = base_tree_dict.get(file)
+            
+            if current_sha == other_sha and current_sha != None: # File hasn't been modified in neither branches
+                new_index[file] = other_sha 
+            elif current_sha == base_sha: # Modified or deleted in other branch
+                if other_sha != None:
+                    new_index[file] = other_sha
+            elif other_sha == base_sha: # Modified or deleted in current branch
+                if current_tree_dict[file] != None:
+                    new_index[file] = current_tree_dict[file]
+            else: # Conflict
+                conflicts.append(file)
+                new_index[file] = current_sha   
+            
+            
+        # Deleting current files
+        for file in current_tree_dict:
+            path = os.path.normpath(file)
+            try:
+                os.remove(path)
+            except FileNotFoundError:
+                continue
+            dirs = path.replace("\\", "/").split("/")
+            dirs = dirs[:-1]
+            
+            for i in range(len(dirs), 0, -1):
+                dir_path = os.path.normpath("/".join(dirs[:i]))
+                try:
+                    os.rmdir(dir_path)
+                except OSError:
+                    pass
+        
+        # Writing files
+        for file in new_index:
+            if file not in conflicts:
+                path = os.path.normpath(file)
+                parent = os.path.dirname(path)
+                if parent:
+                    os.makedirs(parent,exist_ok=True)
+                key, data = read_object(new_index[file])
+                with open(path,"wb") as f:
+                    f.write(data)
+            else:
+                path = os.path.normpath(file)
+                parent = os.path.dirname(path)
+                if parent:
+                    os.makedirs(parent,exist_ok=True)
+                key, current_data = read_object(current_tree_dict.get(file))
+                key, other_data = read_object(other_tree_dict.get(file))
+                conflict_file_data = "<<<<<<<<< CURRENT BRANCH\n"
+                conflict_file_data += current_data.decode()
+                conflict_file_data += "\n========================================================================\n"
+                conflict_file_data += other_data.decode()
+                conflict_file_data += "\n>>>>>>>>> OTHER BRANCH"
+                with open(path,"w") as f:
+                    f.write(conflict_file_data)
+            
+        with open(".vic/index", "w") as f:
+            json.dump(new_index, f)
+            
+        if conflicts == []:
+            # Creating tree object
+            tree_object = b""
+            for file in new_index:
+                tree_object += b"100644 " + file.encode() + b"\0" + bytes.fromhex(new_index[file])
+            
+            tree_sha = hash_object(tree_object, "tree")
+            
+            message = f"Merge commit between {current_branch} and {other_branch}"
+            
+            # Creating commit object
+            lines = []
+            lines.append(f"tree {tree_sha}")
+            lines.append(f"parent {current_commit_sha}")
+            lines.append(f"parent {other_commit_sha}")
+            lines.append(f"author Utente <utente@gmail.com> {int(time.time())}")
+            lines.append(f"committer Utente <utente@gmail.com> {int(time.time())}")
+            lines.append("")
+            lines.append(message)
+            commit = "\n".join(lines)
+            commit = commit.encode()
+            commit_sha = hash_object(commit,"commit")
+            
+            with open(f".vic/{head_path}", "w") as f:
+                f.write(commit_sha)
+            
+            print(f"Commit made at {time.ctime(int(time.time()))}: {message}")
+            
+        else:
+            with open(".vic/MERGE_HEAD", "w") as f:
+                f.write(other_commit_sha)
+            
+            for file in conflicts:
+                print(f"CONFLICT: {file}")
+            
+            print("Fix all conflicts and run vic add ., and vic commit")
