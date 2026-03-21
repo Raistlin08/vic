@@ -2,7 +2,7 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored, get_hash, get_tree, get_merge_base, get_all_reachable
+from vic.utils import is_ignored, get_hash, get_tree, get_merge_base, get_all_reachable, get_config
 import time
 from difflib import unified_diff
 
@@ -754,3 +754,28 @@ def cmd_restore(files):
             with open(path,"wb") as f:
                 f.write(blob)
             print(f"{path} has been restored")
+            
+
+"""
+Takes as input either:
+nothing -> prints current config
+name and/or email -> saves new configuration to .vic/config
+"""
+def cmd_config(name, email):
+    config = get_config()
+    modified = False
+    if name:
+        config["name"] = name
+        print("Name set")
+        modified = True
+    if email:
+        config["email"] = email
+        print("Email set")
+        modified = True
+    
+    if modified:
+        with open(".vic/config", "w")as f:
+            json.dump(config,f)
+    else:
+        print(f"Name: {config["name"]}")
+        print(f"Email: {config["email"]}")

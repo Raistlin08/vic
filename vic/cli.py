@@ -1,6 +1,6 @@
 import argparse, sys
 from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit
-from vic.commands import cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge, cmd_gc, cmd_restore
+from vic.commands import cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge, cmd_gc, cmd_restore, cmd_config
 
 """
 Main functions, handles iteraction through cli
@@ -44,6 +44,10 @@ def main():
     p_restore = sub.add_parser("restore", help="Restore specified files to their index version")
     p_restore.add_argument("files",nargs="+")
     
+    p_config = sub.add_parser("config")
+    p_config.add_argument("--name", default=None)
+    p_config.add_argument("--email", default=None)
+    
     args = parser.parse_args()
     
     match args.command:
@@ -59,6 +63,7 @@ def main():
         case "merge": cmd_merge(args.branch)
         case "gc": cmd_gc()
         case "restore": cmd_restore(args.files)
+        case "config": cmd_config(args.name, args.email)
         case _:
             parser.print_help()
             sys.exit(1)

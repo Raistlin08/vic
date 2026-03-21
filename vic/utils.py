@@ -1,6 +1,7 @@
 from fnmatch import fnmatch
 from hashlib import sha1
 from vic.objects import read_object
+import json
 
 
 # Checks if a given file or direcotory is to ignore using .vicingore
@@ -145,3 +146,14 @@ def get_all_reachable(commit_sha):
         reachable = reachable | get_all_reachable(parent_sha)
     
     return reachable | get_all_reachable(base_sha)
+
+
+# Utility function that returns the config file as a dict
+def get_config():
+    try:
+        with open(".vic/config", "r") as f:
+            return json.loads(f.read())
+    except FileNotFoundError:
+        config = {"name": "", "email": ""}
+        return config
+        
