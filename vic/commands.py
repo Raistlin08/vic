@@ -696,6 +696,34 @@ def cmd_merge(other_branch):
             
             print("Fix all conflicts and run vic add ., and vic commit")
             
-            
+
+"""
+Garbage collector function
+iterates over all branches and commits to find all referenced objects
+and then deletes from the file system the one that aren't referenced
+"""
 def cmd_gc():
-    pass
+    
+    #get reachables
+    reachable = set()
+    for root, dirs, items in os.walk(".vic/refs/heads/"):
+        for item in items:
+            path = os.path.join(root, item)
+            with open(path, "r") as f:
+                reachable=reachable | get_all_reachable(f.read())
+    
+    count = 0
+    # Walk objects directory
+    for root, dirs, items in os.walk(".vic/objects/"):
+        for item in items:
+            folder_part = os.path.join(root,item).replace("\\", "/").split("/")[-2]
+            file_part = item
+            sha = folder_part+file_part
+            if sha not in reachable:
+                try:
+                    os.remove(os.path.join(root, item))
+                    count+=1
+                except FileNotFoundError:
+                    continue
+    
+    print(f"Removed {count} unreachable objects")

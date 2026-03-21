@@ -1,5 +1,5 @@
 import argparse, sys
-from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge
+from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge, cmd_gc
 
 """
 Main functions, handles iteraction through cli
@@ -38,6 +38,8 @@ def main():
     p_branch = sub.add_parser("merge", help="Merges current branch with the specified one") # Merge command
     p_branch.add_argument("branch")
     
+    sub.add_parser("gc", help="Run this to clear un-referenced files in .vic folder") # Garbage collector command
+    
     args = parser.parse_args()
     
     match args.command:
@@ -51,6 +53,7 @@ def main():
         case "branch": cmd_branch(args.branch, args.delete)
         case "checkout": cmd_checkout(args.branch)
         case "merge": cmd_merge(args.branch)
+        case "gc": cmd_gc()
         case _:
             parser.print_help()
             sys.exit(1)
