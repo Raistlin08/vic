@@ -725,6 +725,10 @@ def cmd_gc():
                     count+=1
                 except FileNotFoundError:
                     continue
+                try:
+                    os.rmdir(root)
+                except OSError:
+                    pass
     
     print(f"Removed {count} unreachable objects")
     
