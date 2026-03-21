@@ -209,6 +209,9 @@ def cmd_commit(message):
         except FileNotFoundError:
             parent_sha = None
         
+        # Getting configs
+        config = get_config()
+        
         # Creating commit object
         lines = []
         lines.append(f"tree {tree_sha}")
@@ -217,8 +220,9 @@ def cmd_commit(message):
         if merge_commit:
             os.remove(".vic/MERGE_HEAD")
             lines.append(f"parent {merge_commit }")
-        lines.append(f"author Utente <utente@gmail.com> {int(time.time())}")
-        lines.append(f"committer Utente <utente@gmail.com> {int(time.time())}")
+        lines.append(f"author {config["name"]} {config["email"]}")
+        lines.append(f"committer {config["name"]} {config["email"]}")
+        lines.append(f"timestamp  {int(time.time())}")
         lines.append("")
         lines.append(message)
         commit = "\n".join(lines)
@@ -288,11 +292,11 @@ def cmd_log():
                         sha = key[1]
                 elif key[0]=="author":
                     tmp = key[1].split(" ")
-                    author = tmp[0] + tmp[1]
+                    author = key[1]
                 elif key[0] == "committer":
-                    tmp = key[1].split(" ")
-                    committer = tmp[0] + tmp[1]
-                    date = time.ctime(int(tmp[2]))
+                    committer = key[1]
+                elif key[0]=="timestamp":
+                    date = time.ctime(int(key[1]))
                 if row=="":
                     message = True
                     
