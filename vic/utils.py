@@ -95,3 +95,53 @@ def get_merge_base(sha1, sha2):
                 continue
                 
     return None # If no common ancestor were found
+
+
+# Recursive function to find all referenced objects given a commit sha
+def get_all_reachable(commit_sha):
+    reachable = set()
+    reachable.add(commit_sha)
+    sha = commit_sha
+    type, content = read_object(sha)
+    content = content.decode()
+    content = content.split("\n")
+    
+    parent_found = False
+    merge_commit = False
+    
+    base_sha = None
+    parent_sha = None
+    message = False
+    tree_sha = None
+    
+    # Parsing of the commit
+    for row in content:
+        if message:
+            message = row
+            break
+        key = row.split(" ",1)
+        if key[0]=="parent":
+            reachable.add(key[1])
+            if parent_found:
+                merge_commit = True
+                parent_sha = key[1]
+            else:
+                parent_found = True
+                base_sha = key[1]
+        elif key[0] == "tree":
+            reachable.add(key[1])
+
+    tree = get_tree(commit_sha)
+    
+
+    for file in tree:
+        reachable.add(tree[file])
+
+    if not parent_found:
+        return reachable
+    
+
+    if merge_commit:
+        reachable = reachable | get_all_reachable(parent_sha)
+    
+    return reachable | get_all_reachable(base_sha)

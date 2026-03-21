@@ -2,7 +2,7 @@ import os
 import ctypes
 import json
 from vic.objects import hash_object, read_object
-from vic.utils import is_ignored, get_hash, get_tree, get_merge_base
+from vic.utils import is_ignored, get_hash, get_tree, get_merge_base, get_all_reachable
 import time
 from difflib import unified_diff
 
@@ -695,3 +695,7 @@ def cmd_merge(other_branch):
                 print(f"CONFLICT: {file}")
             
             print("Fix all conflicts and run vic add ., and vic commit")
+            
+            
+def cmd_gc():
+    pass
