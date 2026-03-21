@@ -7,9 +7,7 @@ Messaggi di errore più consistenti ovunque
 
 Comandi utili
 
-vic gc — garbage collector per eliminare dangling objects
 vic stash — salva temporaneamente le modifiche senza committare
-vic restore — ripristina un file alla versione nell'indice
 
 Funzionalità avanzate
 

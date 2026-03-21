@@ -1,5 +1,6 @@
 import argparse, sys
-from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit, cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge, cmd_gc
+from vic.commands import cmd_init, cmd_add, cmd_rm, cmd_diff, cmd_commit
+from vic.commands import cmd_log, cmd_status, cmd_branch, cmd_checkout, cmd_merge, cmd_gc, cmd_restore
 
 """
 Main functions, handles iteraction through cli
@@ -40,6 +41,9 @@ def main():
     
     sub.add_parser("gc", help="Run this to clear un-referenced files in .vic folder") # Garbage collector command
     
+    p_restore = sub.add_parser("restore", help="Restore specified files to their index version")
+    p_restore.add_argument("files",nargs="+")
+    
     args = parser.parse_args()
     
     match args.command:
@@ -54,6 +58,7 @@ def main():
         case "checkout": cmd_checkout(args.branch)
         case "merge": cmd_merge(args.branch)
         case "gc": cmd_gc()
+        case "restore": cmd_restore(args.files)
         case _:
             parser.print_help()
             sys.exit(1)

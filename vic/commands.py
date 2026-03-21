@@ -727,3 +727,26 @@ def cmd_gc():
                     continue
     
     print(f"Removed {count} unreachable objects")
+    
+"""    
+Takes as input a list of files and restores each one of teh to the index saved version
+"""    
+def cmd_restore(files):
+    try:
+        with open(".vic/index", "r") as f:
+            indexRaw=f.read()
+        index = json.loads(indexRaw)
+    except FileNotFoundError:
+        index = {}
+    for file in files:
+        path = os.path.normpath(file)
+        if path not in index.keys():
+            print(f"File {path} isn't in index")
+        else:
+            parent = os.path.dirname(path)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+            key, blob = read_object(index[path])
+            with open(path,"wb") as f:
+                f.write(blob)
+            print(f"{path} has been restored")
